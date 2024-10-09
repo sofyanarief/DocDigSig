@@ -2,6 +2,7 @@ from DatabaseConnector import DatabaseConnector
 from User import User
 from Key import Key
 from Document import Document
+from EmbedQR import EmbedQR
 import os
 import qrcode
 from Crypto.PublicKey import RSA
@@ -72,7 +73,8 @@ def add_document():
         # Generate QRCode dari URL file hasil
         generate_qrcode(upname_document)
         # Masukkan QRCode ke file
-
+        embedQR = EmbedQR()
+        embedQR.embed(UPLOAD_FOLDER+upname_document,UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'-out.pdf',UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'.png')
         return jsonify({'message': 'File '+ origname_document +' uploaded successfully'}), 201
     
     return jsonify({'error': 'Invalid file type. Only PDFs are allowed.'}), 400

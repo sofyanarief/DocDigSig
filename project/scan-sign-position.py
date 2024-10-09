@@ -1,6 +1,7 @@
 import pdfquery
 import xml.etree.ElementTree as ET
 import fitz
+from PIL import Image
 
 def extract_data_from_pdf(file_path):
     pdf = pdfquery.PDFQuery(file_path)
@@ -11,37 +12,52 @@ def extract_data_from_pdf(file_path):
 def convert_xml_to_arr(xml_text):
     root = ET.fromstring(xml_text)
     return root
+
+# Ekstrak posisi [[PERSON SIGN]] dari PDF
 data = extract_data_from_pdf('Sample.pdf')
-# print(data)
 data_arr = convert_xml_to_arr(str(data))
-# print(data_arr.tag)
-# print(data_arr.attrib['bbox'])
+
+# Mendapatkan posisi (bbox) placeholder
 image_to_add_pos = data_arr.attrib['bbox']
-image_to_add_pos = image_to_add_pos.replace("[","")
-image_to_add_pos = image_to_add_pos.replace("]","")
+image_to_add_pos = image_to_add_pos.replace("[","").replace("]","")
 image_to_add_pos2 = image_to_add_pos.split(", ")
-print(image_to_add_pos2)
+
+# Koordinat awal
 x0 = float(image_to_add_pos2[0])
-print(x0)
 y0 = float(image_to_add_pos2[1])
-print(y0)
-x1 = float(image_to_add_pos2[2])+50
-print(x1)
-y1 = float(image_to_add_pos2[3])+50
-print(y1)
+x1 = float(image_to_add_pos2[2])
+y1 = float(image_to_add_pos2[3])
+
+# Buka file PDF untuk modifikasi
 file_handle = fitz.open('Sample.pdf')
 first_page = file_handle[0]
-print(first_page.mediabox.height)
-# x0 = first_page.mediabox.width - x0
-# print(x0)
-# y0 = first_page.mediabox.height - y0
-# print(y0)
-# x1 = first_page.mediabox.width - x1
-# print(x1)
-# y1 = first_page.mediabox.height - y1
-# print(y1)
-image_rectangle = fitz.Rect(x0,y0,x1,y1)
-img = open("MyQRCode2.png", "rb").read()  # an image file
-img_xref = 0
-first_page.insert_image(image_rectangle,stream=img,xref=img_xref)
+
+# Dapatkan tinggi dan lebar halaman untuk perhitungan Y yang benar
+page_height = first_page.mediabox.height
+page_width = first_page.mediabox.width
+
+# Penyesuaian sumbu Y (menjaga posisi QR code tepat di atas placeholder)
+# Kita gunakan y1 sebagai acuan untuk menempatkan QR code di bagian atas placeholder
+y0_new = page_height - y1  # Menggunakan y1 sebagai posisi atas
+
+# Atur proporsi gambar QR agar tidak berubah (misalnya, lebar ditambah 50, tinggi disesuaikan dengan proporsi)
+qr_image_path = "MyQRCode2.png"
+img = Image.open(qr_image_path)
+aspect_ratio = img.height / img.width
+
+new_width = x1 - x0 + 50  # Tambahkan lebar sesuai keinginan
+new_height = new_width * aspect_ratio  # Tinggi dihitung berdasarkan rasio lebar-tinggi asli
+
+# Koordinat penempatan gambar QR (di atas placeholder, tidak lebih rendah)
+image_rectangle = fitz.Rect(x0, y0_new, x0 + new_width, y0_new + new_height)
+
+# Insert QR code ke halaman PDF
+with open(qr_image_path, "rb") as img_file:
+    img_data = img_file.read()
+    first_page.insert_image(image_rectangle, stream=img_data)
+
+# Simpan PDF yang telah dimodifikasi
 file_handle.save('Sample-out.pdf')
+file_handle.close()
+
+print("QR Code telah berhasil ditambahkan.")
