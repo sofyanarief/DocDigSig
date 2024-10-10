@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 import uuid
 from flask import Flask, request, jsonify, redirect, url_for, render_template, flash
 
-HOST_URL = 'http://localhost/'
+HOST_URL = 'http://localhost:5000/'
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'pdf'}
 DBHOST = '192.168.73.198'
@@ -130,4 +130,4 @@ def add_key():
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)  # Membuat folder jika belum ada
-    app.run(debug=True)
+    app.run(debug=True,host='0.0.0.0', port=80)
