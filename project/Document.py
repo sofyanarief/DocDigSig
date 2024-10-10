@@ -2,12 +2,12 @@ class Document:
     def __init__(self, db):
         self.db = db
 
-    def insert_document(self, origname_document, upname_document, t_user_id_user, t_key_id_key, t_key_t_user_id_user):
+    def insert_document(self, origname_document, upname_document, t_user_id_user, t_key_id_key):
         query = """
-        INSERT INTO t_document (origname_document, upname_document, t_user_id_user, t_key_id_key, t_key_t_user_id_user)
+        INSERT INTO t_document (origname_document, upname_document, t_user_id_user, t_key_id_key)
         VALUES (%s, %s, %s, %s, %s)
         """
-        self.db.execute_query(query, (origname_document, upname_document, t_user_id_user, t_key_id_key, t_key_t_user_id_user))
+        self.db.execute_query(query, (origname_document, upname_document, t_user_id_user, t_key_id_key))
 
     def get_document(self, id_document):
         query = "SELECT * FROM t_document WHERE id_document = %s"

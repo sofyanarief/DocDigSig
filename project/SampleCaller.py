@@ -69,7 +69,7 @@ def add_document():
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], upname_document))  # Simpan file
         db = get_db_connection()
         document = Document(db)
-        document.insert_document(origname_document, upname_document, t_user_id_user, t_key_id_key, t_key_t_user_id_user)
+        document.insert_document(origname_document, upname_document, t_user_id_user, t_key_id_key)
         key = Key(db)
         key = key.get_key(t_key_id_key)
         db.close()
