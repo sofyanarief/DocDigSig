@@ -15,7 +15,7 @@ from flask import Flask, request, jsonify, redirect, url_for, render_template, f
 HOST_URL = 'http://localhost/'
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'pdf'}
-DBHOST = 'localhost'
+DBHOST = '192.168.73.198'
 DBUSER = 'docdigsig'
 DBPASS = 'docdigsig@2024'
 DBNAME = 'docdigsig'
