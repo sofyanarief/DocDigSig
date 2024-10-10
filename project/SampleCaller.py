@@ -9,6 +9,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
 from werkzeug.utils import secure_filename
+import uuid
 from flask import Flask, request, jsonify, redirect, url_for, render_template, flash
 
 HOST_URL = 'http://localhost/'
@@ -51,9 +52,10 @@ def add_document():
         return jsonify({'error': 'No file part in the request'}), 400
     
     file = request.files['file']
-    data = request.json
+    data = request.form
     origname_document = file.filename
-    upname_document = secure_filename(file.filename)
+    # upname_document = secure_filename(file.filename)
+    upname_document = str(uuid.uuid4())+'.pdf'
     t_user_id_user = data.get('t_user_id_user')
     t_key_id_key = data.get('t_key_id_key')
     t_key_t_user_id_user = data.get('t_key_t_user_id_user')
@@ -68,13 +70,19 @@ def add_document():
         db = get_db_connection()
         document = Document(db)
         document.insert_document(origname_document, upname_document, t_user_id_user, t_key_id_key, t_key_t_user_id_user)
+        key = Key(db)
+        key = key.get_key(t_key_id_key)
         db.close()
+        # print(str(key))
+        print(key[0]['key_position'])
+        print(key[0]['key_name'])
+        print(key[0]['key_other_info'])
         # Proses tambahkan ttd di file
         # Generate QRCode dari URL file hasil
         generate_qrcode(upname_document)
         # Masukkan QRCode ke file
         embedQR = EmbedQR()
-        embedQR.embed(UPLOAD_FOLDER+upname_document,UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'-out.pdf',UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'.png')
+        embedQR.embed(UPLOAD_FOLDER+upname_document,UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'-out.pdf',UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'.png',key[0]['key_position'],key[0]['key_name'],key[0]['key_other_info'])
         return jsonify({'message': 'File '+ origname_document +' uploaded successfully'}), 201
     
     return jsonify({'error': 'Invalid file type. Only PDFs are allowed.'}), 400
