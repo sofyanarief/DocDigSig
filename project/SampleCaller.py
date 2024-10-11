@@ -3,16 +3,17 @@ from User import User
 from Key import Key
 from Document import Document
 from EmbedQR import EmbedQR
+from SignAndEmbed import SignAndEmbed
+from EmbedSign import EmbedSign
 import os
 import qrcode
 from Crypto.PublicKey import RSA
-from Crypto.Signature import pkcs1_15
-from Crypto.Hash import SHA256
-from werkzeug.utils import secure_filename
 import uuid
 from flask import Flask, request, jsonify, redirect, url_for, render_template, flash
 
-HOST_URL = 'http://localhost:5000/'
+HOSTNAME = "localhost"
+HOSTPORT = 5000
+HOST_URL = 'http://'+HOSTNAME+':'+str(HOSTPORT)+'/'
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'pdf'}
 DBHOST = '192.168.73.198'
@@ -58,7 +59,6 @@ def add_document():
     upname_document = str(uuid.uuid4())+'.pdf'
     t_user_id_user = data.get('t_user_id_user')
     t_key_id_key = data.get('t_key_id_key')
-    t_key_t_user_id_user = data.get('t_key_t_user_id_user')
     
     # Jika tidak ada file yang dipilih
     if file.filename == '':
@@ -74,15 +74,26 @@ def add_document():
         key = key.get_key(t_key_id_key)
         db.close()
         # print(str(key))
-        print(key[0]['key_position'])
-        print(key[0]['key_name'])
-        print(key[0]['key_other_info'])
+        # print(key[0]['key_position'])
+        # print(key[0]['key_name'])
+        # print(key[0]['key_other_info'])
         # Proses tambahkan ttd di file
         # Generate QRCode dari URL file hasil
         generate_qrcode(upname_document)
         # Masukkan QRCode ke file
-        embedQR = EmbedQR()
-        embedQR.embed(UPLOAD_FOLDER+upname_document,UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'-out.pdf',UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'.png',key[0]['key_position'],key[0]['key_name'],key[0]['key_other_info'])
+        # embedQR = EmbedQR()
+        # embedQR.embed(UPLOAD_FOLDER+upname_document,UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'-out.pdf',UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'.png',key[0]['key_position'],key[0]['key_name'],key[0]['key_other_info'])
+        # outUpname = UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'-out.pdf'
+        # priv_key = key[0]['key_priv_value']
+        # # print(str(outUpname))
+        # # print(str(priv_key))
+        # signAndEmbed = SignAndEmbed()
+        # signAndEmbed.sign_pdf(outUpname,priv_key)
+        file_url = HOST_URL+UPLOAD_FOLDER
+        input_pdf = UPLOAD_FOLDER+upname_document
+        output_pdf = UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'-out.pdf'
+        embed_sign = EmbedSign()
+        embed_sign.embed_and_sign(file_url,input_pdf,output_pdf,key[0]['key_position'],key[0]['key_name'],key[0]['key_other_info'],key[0]['key_priv_value'],key[0]['key_pub_value'])
         return jsonify({'message': 'File '+ origname_document +' uploaded successfully'}), 201
     
     return jsonify({'error': 'Invalid file type. Only PDFs are allowed.'}), 400
@@ -130,4 +141,4 @@ def add_key():
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)  # Membuat folder jika belum ada
-    app.run(debug=True,host='0.0.0.0', port=80)
+    app.run(debug=True,host='0.0.0.0', port=HOSTPORT)

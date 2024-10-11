@@ -5,7 +5,7 @@ class Document:
     def insert_document(self, origname_document, upname_document, t_user_id_user, t_key_id_key):
         query = """
         INSERT INTO t_document (origname_document, upname_document, t_user_id_user, t_key_id_key)
-        VALUES (%s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s)
         """
         self.db.execute_query(query, (origname_document, upname_document, t_user_id_user, t_key_id_key))
 
