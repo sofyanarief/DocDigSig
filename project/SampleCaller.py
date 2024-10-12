@@ -34,15 +34,6 @@ def get_db_connection():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Generate QRCode dari URL file hasil
-def generate_qrcode(upname_document):
-    qrdata = HOST_URL + UPLOAD_FOLDER + upname_document
-    qr = qrcode.QRCode()
-    qr.add_data(qrdata)
-    qr.make(fit = True)
-    img = qr.make_image()
-    img.save(UPLOAD_FOLDER+upname_document.rsplit(".", 1)[0]+'.png')
-
 # Route untuk upload file
 @app.route('/documents', methods=['POST'])
 def add_document():
