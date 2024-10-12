@@ -76,9 +76,6 @@ class EmbedSign:
         # Generate sertifikat self-signed dari kunci privat
         self.generate_self_signed_certificate(temp_key_file, temp_cert_file)
 
-        # with open(pdf_in, 'rb') as pdf_file:
-        #     pdf_data = pdf_file.read()
-
         with open(temp_cert_file, 'rb') as cert_file, open(temp_key_file, 'rb') as key_file:
             cert = cert_file.read()
             key = key_file.read()
