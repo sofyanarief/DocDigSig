@@ -4,7 +4,6 @@ from Key import Key
 from Document import Document
 from EmbedSign import EmbedSign
 import os
-import qrcode
 from Crypto.PublicKey import RSA
 import uuid
 from flask import Flask, request, jsonify
