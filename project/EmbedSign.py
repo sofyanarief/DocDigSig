@@ -1,20 +1,11 @@
+import os
 import pdfquery
 import xml.etree.ElementTree as ET
 import fitz
 from pyhanko import stamp
 from pyhanko.stamp import QRPosition
-from pyhanko.pdf_utils import text
-from pyhanko.pdf_utils.font import opentype
-from pyhanko.pdf_utils.content import PdfContent
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
 from pyhanko.sign import fields, signers
-import subprocess
-import os
-from pyhanko_certvalidator.context import ValidationContext
-from pyhanko.sign.fields import SigFieldSpec
-from pyhanko.sign.signers import PdfSigner
-from pyhanko.sign import PdfSigner, signers
-from pyhanko.sign.general import load_private_key_from_pemder
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.x509.oid import NameOID
@@ -110,12 +101,46 @@ class EmbedSign:
         x1 = float(image_to_add_pos2[2])
         y1 = float(image_to_add_pos2[3])
 
+        # Buka file PDF untuk modifikasi
+        file_handle = fitz.open(pdf_in)
+        first_page = file_handle[0]
+
+        # Dapatkan tinggi dan lebar halaman untuk perhitungan Y yang benar
+        page_height = first_page.mediabox.height
+        page_width = first_page.mediabox.width
+        print(str(x0))
+        print(str(x1))
+        print(str(page_width))
+        print(str(y0))
+        print(str(y1))
+        print(str(page_height))
+
+        image_rectangle = fitz.Rect(x0, page_height-y1, x1, page_height-y0)
+        first_page.draw_rect(image_rectangle, color=(1, 1, 1), fill=(1, 1, 1), width=0)  # RGB (1,1,1) is white, width=0 removes border
+        
+        # Menambahkan teks di atas QR code
+        first_page.insert_text((x0, page_height-y0), 
+                               key_position,
+                               fontsize=12,
+                               fontname="Times-Roman",  # Menggunakan font standar Helvetica
+                               color=(0, 0, 0))  # Warna hitam
+        
+        # Menambahkan teks di bawah QR code
+        first_page.insert_text((x0, page_height-y0+160), 
+                               key_name+"\n"+key_other_info, 
+                               fontsize=12, 
+                               fontname="Times-Roman",  # Menggunakan font standar Helvetica
+                               color=(0, 0, 0))  # Warna hitam
+
+        file_handle.save(pdf_in.replace('.pdf','-1.pdf'))
+        file_handle.close()
+
         signer = signers.SimpleSigner.load(
             temp_key_file, temp_cert_file,
             key_passphrase=None
         )
         
-        with open(pdf_in, 'rb') as inf:
+        with open(pdf_in.replace('.pdf','-1.pdf'), 'rb') as inf:
             w = IncrementalPdfFileWriter(inf,strict=False)
             fields.append_signature_field(
                 w, sig_field_spec=fields.SigFieldSpec(
@@ -128,21 +153,21 @@ class EmbedSign:
                 meta,
                 signer=signer,
                 stamp_style=stamp.QRStampStyle(
-                    # Let's include the URL in the stamp text as well
-                    stamp_text=key_position+'\n'+key_name+'\n'+key_other_info,
-                    # text_box_style=text.TextBoxStyle(
-                    #     font=opentype.GlyphAccumulatorFactory('./TNR-Bold.ttf')
-                    # ),
+                    stamp_text="",
                     border_width=0,
                     qr_position=QRPosition.ABOVE_TEXT
                 )
             )
             
             with open(pdf_out, 'wb') as outf: 
-                # with QR stamps, the 'url' text parameter is special-cased and mandatory, even if it
-                # doesn't occur in the stamp text: this is because the value of the 'url' parameter is
-                # also used to render the QR code.
                 pdf_signer.sign_pdf(
                     w, output=outf,
                     appearance_text_params={'url': uri}
                 )
+
+        #cleanup temp file
+        os.remove(pdf_in)
+        os.remove(pdf_in.replace('.pdf','-1.pdf'))
+        os.remove(temp_key_file)
+        os.remove(temp_cert_file)
+        os.rename(pdf_out,pdf_out.replace('-out',''))
