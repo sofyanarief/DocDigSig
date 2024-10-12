@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docdigsig-web
+  labels:
+    name: docdigsig-web
+spec:
+  selector:
+    matchLabels:
+      name: docdigsig-web
+  template:
+    metadata:
+      name: docdigsig-web
+      labels:
+        name: docdigsig-web
+    spec:
+      containers:
+        - name: docdigsig-web
+          image: sofyanarief/docdigsig:arm64
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "384Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: nfs-vol
+              mountPath: /app # The mountpoint inside the container
+      volumes:
+        - name: nfs-vol
+          nfs:
+            server: 10.0.0.2 # IP to our NFS server
+            path: /mnt/ext/nfs-share/docdigsig # The exported directory
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: docdigsig-web-service
+spec:
+  selector:
+    name: docdigsig-web
+  ports:
+    - port: 80
+      targetPort: 80
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: docdigsig-web-ingress
+  # namespace: production
+  labels:
+    name: docdigsig-web-ingress
+spec:
+  rules:
+    - host: docdigsig.sofyanarief.edu
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: docdigsig-web-service
+                port:
+                  number: 80
+
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-docdigsig-web
+spec:
+  minReplicas: 3
+  maxReplicas: 2000
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: docdigsig-web
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 15
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 5

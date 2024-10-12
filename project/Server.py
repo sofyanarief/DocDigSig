@@ -9,11 +9,11 @@ import uuid
 from flask import Flask, request, jsonify
 
 HOSTNAME = "localhost"
-HOSTPORT = 5000
+HOSTPORT = 80
 HOST_URL = 'http://'+HOSTNAME+':'+str(HOSTPORT)+'/'
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'pdf'}
-DBHOST = '192.168.73.198'
+DBHOST = '10.0.0.3'
 DBUSER = 'docdigsig'
 DBPASS = 'docdigsig@2024'
 DBNAME = 'docdigsig'
