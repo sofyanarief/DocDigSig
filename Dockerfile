@@ -25,6 +25,7 @@ RUN pip install\
     mysql-connector-python \
     pyhanko[full]\
     pdfquery\
+    gevent\
     six
 
 # Make port 80 available to the world outside this container
