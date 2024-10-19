@@ -7,19 +7,21 @@ import os
 from Crypto.PublicKey import RSA
 import uuid
 from flask import Flask, request, jsonify
+from gevent.pywsgi import WSGIServer
 
 HOSTNAME = "localhost"
-HOSTPORT = 80
+HOSTPORT = 8080
 HOST_URL = 'http://'+HOSTNAME+':'+str(HOSTPORT)+'/'
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'pdf'}
-DBHOST = '10.0.0.3'
+DBHOST = '192.168.73.198'
 DBUSER = 'docdigsig'
 DBPASS = 'docdigsig@2024'
 DBNAME = 'docdigsig'
 
 # Flask App
 app = Flask(__name__)
+app.config['ENV'] = 'production'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'supersecretkey'  # Diperlukan untuk flash messages
 
@@ -113,4 +115,7 @@ def add_key():
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)  # Membuat folder jika belum ada
-    app.run(debug=True,host='0.0.0.0', port=HOSTPORT)
+    # app.run(debug=True,host='0.0.0.0', port=HOSTPORT)
+    http_server = WSGIServer(('', HOSTPORT), app)
+    print("Server running")
+    http_server.serve_forever()
