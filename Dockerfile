@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     libmariadb-dev \
     libssl-dev \
     libpoppler-cpp-dev \
+    build-essential \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install any needed packages specified in requirements
@@ -28,8 +30,8 @@ RUN pip install\
     gevent\
     six
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
+# Make port 8080 available to the world outside this container
+EXPOSE 8080
 
 # Run app.py when the container launches
 CMD ["python", "Server.py"]

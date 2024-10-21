@@ -1,7 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: docdigsig
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: docdigsig-web
+  namespace: docdigsig
   labels:
     name: docdigsig-web
 spec:
@@ -11,6 +19,7 @@ spec:
   template:
     metadata:
       name: docdigsig-web
+      namespace: docdigsig
       labels:
         name: docdigsig-web
     spec:
@@ -18,13 +27,13 @@ spec:
         - name: docdigsig-web
           image: sofyanarief/docdigsig:arm64
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           resources:
             requests:
               memory: "256Mi"
               cpu: "250m"
             limits:
-              memory: "384Mi"
+              memory: "512Mi"
               cpu: "500m"
           volumeMounts:
             - name: nfs-vol
@@ -34,6 +43,8 @@ spec:
           nfs:
             server: 10.0.0.2 # IP to our NFS server
             path: /mnt/ext/nfs-share/docdigsig # The exported directory
+      nodeSelector:
+        node-role.kubernetes.io/worker: "true"
 
 ---
 
@@ -41,12 +52,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: docdigsig-web-service
+  namespace: docdigsig
 spec:
   selector:
     name: docdigsig-web
   ports:
     - port: 80
-      targetPort: 80
+      targetPort: 8080
 
 ---
 
@@ -54,7 +66,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: docdigsig-web-ingress
-  # namespace: production
+  namespace: docdigsig
   labels:
     name: docdigsig-web-ingress
 spec:
@@ -76,9 +88,10 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: hpa-docdigsig-web
+  namespace: docdigsig
 spec:
   minReplicas: 3
-  maxReplicas: 2000
+  maxReplicas: 42
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
